@@ -1,16 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic } from "lucide-react";
-
-interface ISpeechRecognition extends EventTarget {
-  lang: string;
-  onstart: () => void;
-  onend: () => void;
-  onresult: (event: any) => void;
-  start: () => void;
-  stop: () => void;
-}
 
 type ApiResult = {
   transcript?: string;
@@ -20,105 +10,153 @@ type ApiResult = {
 
 export default function Home() {
   const [isListening, setIsListening] = useState(false);
-  const [status, setStatus] = useState("Tap to Start");
+  const [status, setStatus] = useState("🎤 กดเพื่ออู้");
   const [result, setResult] = useState<ApiResult>({});
-
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
     if (!SpeechRecognition) return;
 
-    const rec = new SpeechRecognition() as ISpeechRecognition;
+    const rec = new SpeechRecognition();
     rec.lang = "th-TH";
-    rec.onstart = () => { setIsListening(true); setStatus("Listening"); };
-    rec.onend = () => { setIsListening(false); setStatus("Tap to Start"); };
+
+    rec.onstart = () => {
+      setIsListening(true);
+      setStatus("🎧 เปิ้ลกะลังฟัง...");
+    };
+
+    rec.onend = () => {
+      setIsListening(false);
+      setStatus("🎤 กดเพื่ออู้");
+    };
+
     rec.onresult = async (event: any) => {
       const transcript = event.results?.[0]?.[0]?.transcript || "";
       setResult({ transcript });
-      setStatus("Processing");
+      setStatus("💭 กะลังกึด...");
+
       const resp = await fetch("/api/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: transcript }),
       });
+
       const data = await resp.json();
       setResult(data);
     };
+
     recognitionRef.current = rec;
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#FFF8F9] text-slate-950 font-sans flex flex-col items-center justify-center p-8 relative">
-      
-      {/* 🌸 Subtle Ambient Light - ช่วยให้ไม่โล่งแบบมีมิติ */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 bg-gradient-to-b from-rose-100/40 to-transparent blur-3xl pointer-events-none" />
+    <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 flex items-center justify-center p-6 relative overflow-hidden text-zinc-700 font-sans">
 
-      <div className="w-full max-w-md z-10 flex flex-col items-center">
-        
-        {/* Minimal Header */}
-        <header className="mb-20 text-center space-y-2">
-          <h1 className="text-xs font-black tracking-[0.8em] uppercase text-rose-300">
-            IT SHOP VOICE
-          </h1>
-          <div className="h-[1px] w-4 bg-rose-200 mx-auto" />
-        </header>
+      {/* Background Glow */}
+      <div className="absolute -top-20 -left-20 w-96 h-96 bg-pink-300 rounded-full blur-[140px] opacity-30" />
+      <div className="absolute -bottom-24 -right-20 w-[28rem] h-[28rem] bg-rose-300 rounded-full blur-[160px] opacity-30" />
 
-        {/* The Hub - Microphone */}
-        <div className="relative mb-24">
-          {isListening && (
-            <div className="absolute inset-0 bg-rose-200 rounded-full blur-2xl animate-pulse opacity-50" />
-          )}
-          
-          <button 
-            onClick={() => isListening ? recognitionRef.current?.stop() : (setResult({}), recognitionRef.current?.start())}
-            className={`relative w-32 h-32 rounded-full transition-all duration-700 ease-in-out flex items-center justify-center ${
-              isListening 
-              ? "bg-rose-500 shadow-[0_0_50px_-10px_rgba(244,63,94,0.5)] scale-110" 
-              : "bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(244,63,94,0.1)]"
-            }`}
-          >
-            <Mic 
-              size={32} 
-              className={`transition-colors duration-500 ${isListening ? "text-white" : "text-rose-400"}`} 
-              strokeWidth={1.5} 
-            />
-          </button>
-          
-          <p className={`absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-[0.4em] uppercase transition-all duration-500 ${
-            isListening ? "text-rose-500 tracking-[0.6em]" : "text-slate-300"
-          }`}>
-            {status}
-          </p>
+      <div className="w-full max-w-xl relative z-10">
+
+        <div className="bg-white/80 backdrop-blur-2xl border border-pink-100 rounded-[40px] p-10 shadow-[0_30px_80px_-15px_rgba(244,114,182,0.35)]">
+
+          {/* Header */}
+          <header className="flex justify-between items-center mb-14">
+            <div>
+              <h1 className="text-xs font-bold tracking-[0.3em] uppercase text-pink-500">
+                💗 IT Shop Voice Q&A
+              </h1>
+              <div className="h-[2px] w-10 bg-gradient-to-r from-pink-400 to-rose-400 mt-2 rounded-full" />
+            </div>
+
+            <div className="flex gap-2">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    isListening
+                      ? "bg-pink-500 animate-bounce"
+                      : "bg-pink-200"
+                  }`}
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+          </header>
+
+          {/* Voice Button */}
+          <section className="flex flex-col items-center mb-14">
+            <button
+              onClick={() =>
+                isListening
+                  ? recognitionRef.current?.stop()
+                  : (setResult({}), recognitionRef.current?.start())
+              }
+              className={`relative w-36 h-36 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl ${
+                isListening
+                  ? "bg-gradient-to-br from-pink-500 to-rose-500 scale-105 shadow-pink-400/40"
+                  : "bg-white border border-pink-200 hover:scale-105 hover:shadow-pink-200/50"
+              }`}
+            >
+              <span className="text-4xl">
+                {isListening ? "💖" : "🎀"}
+              </span>
+
+              {isListening && (
+                <div className="absolute inset-0 rounded-full border-4 border-pink-200 animate-ping opacity-40" />
+              )}
+            </button>
+
+            <p className="mt-6 text-xs font-semibold tracking-[0.2em] uppercase text-pink-500">
+              {status}
+            </p>
+          </section>
+
+          {/* Results */}
+          <div className="space-y-8">
+
+            {/* Transcript */}
+            <div className="bg-white rounded-3xl p-6 border border-pink-100 shadow-md">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-pink-400 mb-3">
+                📝 ข้อความตี่ได้ยิน
+              </h2>
+              <p className="text-sm leading-relaxed text-zinc-600">
+                {result.transcript || "🌸 ยังบ่าได้ยินอะหยังเลยจ้าว..."}
+              </p>
+            </div>
+
+            {/* Answer */}
+            <div
+              className={`rounded-3xl p-6 transition-all duration-500 ${
+                result.answer
+                  ? "bg-gradient-to-br from-pink-100 to-rose-100 border border-pink-200 shadow-lg"
+                  : "bg-white border border-dashed border-pink-200"
+              }`}
+            >
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-pink-500 mb-3">
+                💬 คำตอบ
+              </h2>
+              <p
+                className={`text-base leading-relaxed ${
+                  result.answer
+                    ? "text-zinc-800 font-medium"
+                    : "text-zinc-400"
+                }`}
+              >
+                {result.answer || "💭 กะลังกึดคำตอบหื้อจ้าว..."}
+              </p>
+            </div>
+
+          </div>
         </div>
 
-        {/* Content Flow - เรียบแต่เด่นด้วยสีข้อความ */}
-        <div className="w-full space-y-12 transition-all duration-1000">
-          
-          {/* User Input Section */}
-          <div className="text-center group">
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-rose-200 group-hover:text-rose-400 transition-colors">You Said</span>
-            <p className="mt-3 text-lg font-medium text-slate-400 leading-relaxed italic px-4">
-              {result.transcript ? `"${result.transcript}"` : "—"}
-            </p>
-          </div>
-
-          {/* System Response Section */}
-          <div className={`text-center transition-all duration-1000 ${result.answer ? "opacity-100 translate-y-0" : "opacity-20 translate-y-4"}`}>
-            <div className="w-8 h-[2px] bg-rose-100 mx-auto mb-6" />
-            <p className="text-2xl font-black text-slate-900 leading-tight tracking-tight">
-              {result.answer || "Listening for your voice..."}
-            </p>
-          </div>
-
-        </div>
-
-        {/* Footer Credit */}
-        <footer className="fixed bottom-12 opacity-20 hover:opacity-100 transition-opacity">
-          <p className="text-[9px] font-bold tracking-[0.5em] uppercase text-slate-900">
-            Teekit Kianlee
-          </p>
-        </footer>
+        {/* Footer */}
+        <p className="mt-10 text-center text-[10px] tracking-[0.4em] font-semibold text-pink-400 uppercase">
+          ✨ อ้ายธีร์กิต เคียนลี ✨
+        </p>
 
       </div>
     </main>
